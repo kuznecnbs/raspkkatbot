@@ -50,7 +50,11 @@ async def scheduled_rss_parser(bot: Bot):
     while True:
         try:
             new_parsed_rss = feedparser.parse(RSS_URL)
-            if new_parsed_rss != parsed_rss:
+            entry = parsed_rss.entry[0]
+            new_entry = new_parsed_rss.entry[0]
+            entry_link = entry.get("link")
+            new_entry_link = new_entry.get("link")
+            if entry_link != new_entry_link:
                 parsed_rss = new_parsed_rss
                 message_text = await get_latest_change()
                 await send_notification_to_users(bot, message_text)
