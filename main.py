@@ -4,6 +4,7 @@ from aiogram import Bot, Dispatcher, Router
 from dotenv import load_dotenv
 from handlers import general, moodle_rss
 from handlers.moodle_rss import scheduled_rss_parser
+from services.db_service import init_db_connection
 
 load_dotenv()
 TOKEN = os.environ.get("BOT_TOKEN")
@@ -15,7 +16,8 @@ dp.include_router(general.router)
 
 
 async def on_startup(bot: Bot):
-    print("Бот запущен. Запускаю планировщик парсинга...")
+    print("Бот запущен. Запускаю БД и парсинг ...")
+    await init_db_connection()
     asyncio.create_task(scheduled_rss_parser(bot))
 
 

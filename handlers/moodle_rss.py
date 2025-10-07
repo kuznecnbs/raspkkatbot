@@ -7,6 +7,7 @@ from aiogram.filters import Command
 from aiogram.types import Message
 from dotenv import load_dotenv
 from feedparser.namespaces.mediarss import FeedParserDict
+from services.db_service import get_all_notificated_users
 
 load_dotenv()
 RSS_URL = os.environ.get("RSS_URL")
@@ -15,22 +16,51 @@ UPDATE_INTERVAL = 1800
 router = Router()
 
 parsed_rss = None
+new_parsed_rss = None
 
 if hasattr(ssl, "_create_unverified_context"):
     ssl._create_default_https_context = ssl._create_unverified_context
 
 
+async def send_notification_to_users(bot: Bot, message_text: str):
+    user_ids = await get_all_notificated_users()
+
+    if not user_ids:
+        print("Рассылка: активных подписчиков не найдено.")
+        return
+
+    print(f"Рассылка: Найдено {len(user_ids)} активных получателей.")
+
+    for chat_id in user_ids:
+        try:
+            await bot.send_message(
+                chat_id=chat_id, text=message_text, parse_mode="Markdown"
+            )
+            await asyncio.sleep(0.05)
+
+        except Exception as e:
+            print(f"Ошибка отправки сообщения пользователю {chat_id}: {e}")
+    print("Уведомления отправлены")
+
+
 async def scheduled_rss_parser(bot: Bot):
     global parsed_rss
+    global new_parsed_rss
+    parsed_rss = feedparser.parse(RSS_URL)
     while True:
         try:
-            parsed_rss = feedparser.parse(RSS_URL)
+            new_parsed_rss = feedparser.parse(RSS_URL)
+            if new_parsed_rss != parsed_rss:
+                parsed_rss = new_parsed_rss
+                message_text = await get_latest_change()
+                await send_notification_to_users(bot, message_text)
+
         except Exception as e:
             print(f"Критическая ошибка в планировщике RSS: {e}")
         await asyncio.sleep(UPDATE_INTERVAL)
 
 
-async def parse_moodle_rss() -> str:
+async def get_latest_change() -> str:
     global parsed_rss
 
     answer_text = "Последняя замена"
@@ -51,5 +81,5 @@ async def parse_moodle_rss() -> str:
 @router.message(F.text == "Замены")
 @router.message(Command("changes"))
 async def get_changes(message: types.Message) -> None:
-    answer_text = await parse_moodle_rss()
+    answer_text = await get_latest_change()
     await message.answer(answer_text)
