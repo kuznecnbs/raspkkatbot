@@ -1,7 +1,10 @@
 import asyncio
 import os
+from aiogram.fsm.storage.base import KeyBuilder
 import feedparser
-from aiogram import Bot, Dispatcher, types
+import ssl
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram import Bot, Dispatcher, types, Router, F
 from aiogram.filters import CommandStart, Command
 from dotenv import load_dotenv
 
@@ -12,6 +15,15 @@ TOKEN = os.environ.get("BOT_TOKEN")
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
+router = Router()
+dp.include_router(router)
+
+changesButton = KeyboardButton(text="Замены")
+keyboard = ReplyKeyboardMarkup(keyboard=[[changesButton]], resize_keyboard=True)
+
+
+if hasattr(ssl, "_create_unverified_context"):
+    ssl._create_default_https_context = ssl._create_unverified_context
 
 
 async def parse_moodle_rss(url) -> str:
@@ -31,25 +43,31 @@ async def parse_moodle_rss(url) -> str:
         link = entry.get("link", "Нет ссылки")
         published = entry.get("published", "Дата неизвестна")
 
-        answer_text += f"\n📝 {title}\n\n📅 {published}\n➡️ {link}"
+        answer_text += f"\n📝 {title}\n📅 {published}\n➡️ {link}"
         return answer_text
 
 
-@dp.message(CommandStart())
+@router.message(CommandStart())
 async def command_start_handler(message: types.Message) -> None:
-    await message.answer(f"Приветствую, {message.from_user.full_name}! Я бот.")
+    await message.answer(
+        f"Приветствую, {message.from_user.full_name}! Я бот с заменами",
+        reply_markup=keyboard,
+    )
 
 
-@dp.message(Command("changes"))
+@router.message(F.text == "Замены")
+@router.message(Command("changes"))
 async def get_changes(message: types.Message) -> None:
     await bot.send_chat_action(message.chat.id, "typing")
     answer_text = await parse_moodle_rss(RSS_URL)
     await message.answer(answer_text)
 
 
-@dp.message()
+@router.message()
 async def echo_handler(message: types.Message) -> None:
-    await message.answer("Я не знаю такой команды. Не трать мое время.")
+    await message.answer(
+        "Я не знаю такой команды. Не трать мое время.", reply_markup=keyboard
+    )
 
 
 async def main() -> None:
