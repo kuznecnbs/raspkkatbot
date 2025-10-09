@@ -2,8 +2,8 @@ import asyncio
 import os
 from aiogram import Bot, Dispatcher, Router
 from dotenv import load_dotenv
-from handlers import general, moodle_rss
-from handlers.moodle_rss import scheduled_rss_parser
+from handlers import general
+from services.moodle_rss import scheduled_rss_parser
 from services.db_service import init_db_connection
 
 load_dotenv()
@@ -11,7 +11,6 @@ TOKEN = os.environ.get("BOT_TOKEN")
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
-dp.include_router(moodle_rss.router)
 dp.include_router(general.router)
 
 

@@ -85,10 +85,3 @@ async def get_latest_change() -> str:
 
         answer_text += f"\n📝 {title}\n📅 {published}\n➡️ {link}"
         return answer_text
-
-
-@router.message(F.text == "Замены")
-@router.message(Command("changes"))
-async def get_changes(message: types.Message) -> None:
-    answer_text = await get_latest_change()
-    await message.answer(answer_text)
