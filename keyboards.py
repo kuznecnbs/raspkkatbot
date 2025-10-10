@@ -18,6 +18,10 @@ button_turn_on_notification = InlineKeyboardButton(
 button_turn_off_notification = InlineKeyboardButton(
     text="🔕Выключить уведомления", callback_data="turn_off_notifications"
 )
+button_update_changes = InlineKeyboardButton(
+    text="🔄Обновить", callback_data="menu_changes"
+)
+
 
 keyboard_menu_main = InlineKeyboardMarkup(
     inline_keyboard=[[button_menu_changes], [button_menu_options]]
@@ -29,5 +33,5 @@ keyboard_menu_options = InlineKeyboardMarkup(
     ]
 )
 keyboard_menu_changes = InlineKeyboardMarkup(
-    inline_keyboard=[[button_back_to_main_menu]]
+    inline_keyboard=[[button_update_changes], [button_back_to_main_menu]]
 )

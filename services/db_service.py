@@ -33,3 +33,11 @@ async def get_all_notificated_users() -> list[int]:
     return await Database.filter(notifications_enabled=True).values_list(
         "user_id", flat=True
     )
+
+
+async def get_user_notification_status(chat_id: int) -> bool:
+    result = await Database.filter(user_id=chat_id).values("notifications_enabled")
+    if result:
+        return result[0]["notifications_enabled"]
+    else:
+        return False
